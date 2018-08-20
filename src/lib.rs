@@ -108,6 +108,7 @@ macro_rules! __match_iter {
 /// }
 /// ```
 /// 
+#[macro_export]
 macro_rules! band_aid {
     (
         if $p0:tt $b0:block
