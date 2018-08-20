@@ -10,7 +10,7 @@ The following code would not compile because each conditional branch returns an 
 ```Rust
 fn mk_iter(foo: i32) -> impl Iterator<Item = i32> {
     if foo < 0 {
-        vec![1,2,3].into_iter()
+        vec![1, 2, 3].into_iter()
     } else if foo < 2 {
         iter::once(4)
     } else {
@@ -29,7 +29,7 @@ use bandaid::*;
 fn mk_iter(foo: i32) -> impl Iterator<Item = i32> {
     band_aid! {
         if (foo < 0) {
-            vec![1,2,3].into_iter()
+            vec![1, 2, 3].into_iter()
         } else if (foo < 2) {
             iter::once(4)
         } else {

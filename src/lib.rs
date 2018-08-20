@@ -1,5 +1,3 @@
-
-
 #[macro_export]
 #[doc(hidden)]
 macro_rules! __make_iter_a_b {
@@ -9,23 +7,21 @@ macro_rules! __make_iter_a_b {
             B(J),
         }
 
-        impl<I, J> Iterator for $name<I, J> 
-            where 
-                I: Iterator,
-                J: Iterator<Item = I::Item>,
+        impl<I, J> Iterator for $name<I, J>
+        where
+            I: Iterator,
+            J: Iterator<Item = I::Item>,
         {
             type Item = I::Item;
             fn next(&mut self) -> Option<I::Item> {
                 match self {
                     BiIter::A(it) => it.next(),
-                    BiIter::B(it) => it.next()
+                    BiIter::B(it) => it.next(),
                 }
             }
         }
-    }
-} 
-
-
+    };
+}
 
 #[macro_export]
 #[doc(hidden)]
@@ -37,7 +33,7 @@ macro_rules! __if_else_iter {
         #[allow(unused_parens)]
         {
             __make_iter_a_b!(BiIter);
-            if $p0 { 
+            if $p0 {
                 BiIter::A($b0)
             } else {
                 BiIter::B($b1)
@@ -51,7 +47,7 @@ macro_rules! __if_else_iter {
         #[allow(unused_parens)]
         {
             __make_iter_a_b!(BiIter);
-            if $p0 { 
+            if $p0 {
                 BiIter::A($b0)
             } else {
                 BiIter::B(__if_else_iter! {
@@ -98,27 +94,27 @@ macro_rules! __match_iter {
 }
 
 /// Fix things up with a macro!
-/// 
+///
 /// If a `match` of `if else` expression can return different types of iterator on each arm
 /// then `band_aid!` can fix it right up.
-/// 
+///
 /// There is one small caveat, that conditions sometimes have to be placed in parentheses,
 /// to work around a limitation of Rust macros.
-/// 
+///
 /// # Examples
-/// 
-/// Here, `band_aid!` allows the function to return different types of iterator. Without 
+///
+/// Here, `band_aid!` allows the function to return different types of iterator. Without
 /// `band_aid!`, this would be an error, or else you would have to resort to either boxing
 /// the result or maintaining a custom iterator that could combine all of the others.
-/// 
+///
 /// ```
 /// use std::iter;
 /// # use bandaid::*;
-/// 
+///
 /// fn mk_iter(foo: i32) -> impl Iterator<Item = i32> {
 ///     band_aid! {
 ///         if (foo < 0) {
-///             vec![1,2,3].into_iter()
+///             vec![1, 2, 3].into_iter()
 ///         } else if (foo < 2) {
 ///             iter::once(4)
 ///         } else {
@@ -127,7 +123,7 @@ macro_rules! __match_iter {
 ///     }
 /// }
 /// ```
-/// 
+///
 #[macro_export]
 macro_rules! band_aid {
     (
@@ -155,7 +151,6 @@ macro_rules! band_aid {
     };
 }
 
-
 #[cfg(test)]
 mod test {
     use std::iter;
@@ -165,7 +160,7 @@ mod test {
         fn mk_iter(foo: i32) -> impl Iterator<Item = i32> {
             band_aid! {
                 if (foo < 0) {
-                    vec![1,2,3].into_iter()
+                    vec![1, 2, 3].into_iter()
                 } else if (foo < 2) {
                     iter::once(4)
                 } else {
@@ -175,15 +170,20 @@ mod test {
         }
         assert_eq!(vec![4], mk_iter(1).collect::<Vec<_>>());
     }
+
     #[test]
     fn match_expr() {
         fn mk_iter(foo: i32) -> impl Iterator<Item = i32> {
             #[allow(dead_code)]
-            enum F { A, B, C(i32) }
+            enum F {
+                A,
+                B,
+                C(i32),
+            }
             let foo = F::C(foo);
             band_aid! {
                 match foo {
-                    F::A => vec![1,2,3].into_iter(),
+                    F::A => vec![1, 2, 3].into_iter(),
                     F::B => iter::empty(),
                     F::C(n) => iter::once(n),
                 }
