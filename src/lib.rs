@@ -19,7 +19,7 @@ impl<I, J> Iterator for MyIter<I, J>
     }
 }
 
-macro_rules! band_aid {
+macro_rules! __if_else_iter {
     (
         if $p0:tt $b0:block
         else $b1:block
@@ -42,9 +42,66 @@ macro_rules! band_aid {
             if $p0 { 
                 ::MyIter::A($b0)
             } else {
-                ::MyIter::B(band_aid! {
+                ::MyIter::B(__if_else_iter! {
                     if $($rest)+
                 })
+            }
+        }
+    };
+}
+
+macro_rules! __match_iter {
+    (
+        [$($done:pat,)*] match $val:tt {
+            $p:pat => $r:expr $(,)*
+        }
+    ) => {
+        match $val {
+            $p => $r,
+            $($done => unimplemented!(),)*
+        }
+    };
+    (
+        [$($done:pat,)*]
+        match $val:tt {
+            $p0:pat => $r0:expr,
+            $($rest:tt)+
+        }
+    ) => {
+        match $val {
+            $p0 => ::MyIter::A($r0),
+            _ => ::MyIter::B(__match_iter! {
+                [$p0, $($done,)*]
+                match $val {
+                    $($rest)+
+                }
+            })
+        }
+    };
+}
+
+
+macro_rules! band_aid {
+    (
+        if $p0:tt $b0:block
+        $(else if $pi:tt $bi:block)*
+        else $bn:block
+    ) => {
+        __if_else_iter!{
+            if $p0 $b0
+            $(else if $pi $bi)*
+            else $bn
+        }
+    };
+    (
+        match $val:tt {
+            $($rest:tt)+
+        }
+    ) => {
+        __match_iter!{
+            []
+            match $val {
+                $($rest)+
             }
         }
     };
@@ -67,6 +124,21 @@ mod test {
                 }
             }
         }
-        mk_iter(1);
+        assert_eq!(vec![4], mk_iter(1).collect::<Vec<_>>());
+    }
+    #[test]
+    fn match_expr() {
+        fn mk_iter(foo: i32) -> impl Iterator<Item = i32> {
+            enum F { A, B, C(i32) }
+            let foo = F::C(4);
+            band_aid! {
+                match foo {
+                    F::A => vec![1,2,3].into_iter(),
+                    F::B => iter::empty(),
+                    F::C(n) => iter::once(n),
+                }
+            }
+        }
+        assert_eq!(vec![4], mk_iter(4).collect::<Vec<_>>());
     }
 }
