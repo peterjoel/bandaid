@@ -1,23 +1,31 @@
 
-#[doc(hidden)]
-pub enum BiIter<I: Iterator, J: Iterator<Item = I::Item>> {
-    A(I),
-    B(J),
-}
 
-impl<I, J> Iterator for BiIter<I, J> 
-    where 
-        I: Iterator,
-        J: Iterator<Item = I::Item>,
-{
-    type Item = I::Item;
-    fn next(&mut self) -> Option<I::Item> {
-        match self {
-            BiIter::A(it) => it.next(),
-            BiIter::B(it) => it.next()
+#[macro_export]
+#[doc(hidden)]
+macro_rules! __make_iter_a_b {
+    ($name:ident) => {
+        enum $name<I: Iterator, J: Iterator<Item = I::Item>> {
+            A(I),
+            B(J),
+        }
+
+        impl<I, J> Iterator for $name<I, J> 
+            where 
+                I: Iterator,
+                J: Iterator<Item = I::Item>,
+        {
+            type Item = I::Item;
+            fn next(&mut self) -> Option<I::Item> {
+                match self {
+                    BiIter::A(it) => it.next(),
+                    BiIter::B(it) => it.next()
+                }
+            }
         }
     }
-}
+} 
+
+
 
 #[macro_export]
 #[doc(hidden)]
@@ -28,10 +36,11 @@ macro_rules! __if_else_iter {
     ) => {
         #[allow(unused_parens)]
         {
+            __make_iter_a_b!(BiIter);
             if $p0 { 
-                ::BiIter::A($b0)
+                BiIter::A($b0)
             } else {
-                ::BiIter::B($b1)
+                BiIter::B($b1)
             }
         }
     };
@@ -41,10 +50,11 @@ macro_rules! __if_else_iter {
     ) => {
         #[allow(unused_parens)]
         {
+            __make_iter_a_b!(BiIter);
             if $p0 { 
-                ::BiIter::A($b0)
+                BiIter::A($b0)
             } else {
-                ::BiIter::B(__if_else_iter! {
+                BiIter::B(__if_else_iter! {
                     if $($rest)+
                 })
             }
@@ -72,14 +82,17 @@ macro_rules! __match_iter {
             $($rest:tt)+
         }
     ) => {
-        match $val {
-            $p0 => ::BiIter::A($r0),
-            _ => ::BiIter::B(__match_iter! {
-                [$p0, $($done,)*]
-                match $val {
-                    $($rest)+
-                }
-            })
+        {
+            __make_iter_a_b!(BiIter);
+            match $val {
+                $p0 => BiIter::A($r0),
+                _ => BiIter::B(__match_iter! {
+                    [$p0, $($done,)*]
+                    match $val {
+                        $($rest)+
+                    }
+                })
+            }
         }
     };
 }
@@ -99,6 +112,9 @@ macro_rules! __match_iter {
 /// the result or maintaining a custom iterator that could combine all of the others.
 /// 
 /// ```
+/// use std::iter;
+/// # use bandaid::*;
+/// 
 /// fn mk_iter(foo: i32) -> impl Iterator<Item = i32> {
 ///     band_aid! {
 ///         if (foo < 0) {
@@ -143,6 +159,7 @@ macro_rules! band_aid {
 #[cfg(test)]
 mod test {
     use std::iter;
+
     #[test]
     fn if_else_expr() {
         fn mk_iter(foo: i32) -> impl Iterator<Item = i32> {
@@ -161,6 +178,7 @@ mod test {
     #[test]
     fn match_expr() {
         fn mk_iter(foo: i32) -> impl Iterator<Item = i32> {
+            #[allow(dead_code)]
             enum F { A, B, C(i32) }
             let foo = F::C(foo);
             band_aid! {
