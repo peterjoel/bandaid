@@ -22,6 +22,10 @@ fn mk_iter(foo: i32) -> impl Iterator<Item = i32> {
 This can be quickly patched up with `band_aid!`:
 
 ```Rust
+#[macro_use]
+extern crate bandaid;
+use bandaid::*;
+
 fn mk_iter(foo: i32) -> impl Iterator<Item = i32> {
     band_aid! {
         if (foo < 0) {

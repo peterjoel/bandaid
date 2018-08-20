@@ -1,11 +1,11 @@
 
-
-pub enum MyIter<I: Iterator, J: Iterator<Item = I::Item>> {
+#[doc(hidden)]
+pub enum BiIter<I: Iterator, J: Iterator<Item = I::Item>> {
     A(I),
     B(J),
 }
 
-impl<I, J> Iterator for MyIter<I, J> 
+impl<I, J> Iterator for BiIter<I, J> 
     where 
         I: Iterator,
         J: Iterator<Item = I::Item>,
@@ -13,8 +13,8 @@ impl<I, J> Iterator for MyIter<I, J>
     type Item = I::Item;
     fn next(&mut self) -> Option<I::Item> {
         match self {
-            MyIter::A(it) => it.next(),
-            MyIter::B(it) => it.next()
+            BiIter::A(it) => it.next(),
+            BiIter::B(it) => it.next()
         }
     }
 }
@@ -29,9 +29,9 @@ macro_rules! __if_else_iter {
         #[allow(unused_parens)]
         {
             if $p0 { 
-                ::MyIter::A($b0)
+                ::BiIter::A($b0)
             } else {
-                ::MyIter::B($b1)
+                ::BiIter::B($b1)
             }
         }
     };
@@ -42,9 +42,9 @@ macro_rules! __if_else_iter {
         #[allow(unused_parens)]
         {
             if $p0 { 
-                ::MyIter::A($b0)
+                ::BiIter::A($b0)
             } else {
-                ::MyIter::B(__if_else_iter! {
+                ::BiIter::B(__if_else_iter! {
                     if $($rest)+
                 })
             }
@@ -73,8 +73,8 @@ macro_rules! __match_iter {
         }
     ) => {
         match $val {
-            $p0 => ::MyIter::A($r0),
-            _ => ::MyIter::B(__match_iter! {
+            $p0 => ::BiIter::A($r0),
+            _ => ::BiIter::B(__match_iter! {
                 [$p0, $($done,)*]
                 match $val {
                     $($rest)+
