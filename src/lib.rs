@@ -80,7 +80,34 @@ macro_rules! __match_iter {
     };
 }
 
-
+/// Fix things up with a macro!
+/// 
+/// If a `match` of `if else` expression can return different types of iterator on each arm
+/// then `band_aid!` can fix it right up.
+/// 
+/// There is one small caveat, that conditions sometimes have to be placed in parentheses,
+/// to work around a limitation of Rust macros.
+/// 
+/// # Examples
+/// 
+/// Here, `band_aid!` allows the function to return different types of iterator. Without 
+/// `band_aid!`, this would be an error, or else you would have to resort to either boxing
+/// the result or maintaining a custom iterator that could combine all of the others.
+/// 
+/// ```
+/// fn mk_iter(foo: i32) -> impl Iterator<Item = i32> {
+///     band_aid! {
+///         if (foo < 0) {
+///             vec![1,2,3].into_iter()
+///         } else if (foo < 2) {
+///             iter::once(4)
+///         } else {
+///             iter::empty()
+///         }
+///     }
+/// }
+/// ```
+/// 
 macro_rules! band_aid {
     (
         if $p0:tt $b0:block
@@ -130,7 +157,7 @@ mod test {
     fn match_expr() {
         fn mk_iter(foo: i32) -> impl Iterator<Item = i32> {
             enum F { A, B, C(i32) }
-            let foo = F::C(4);
+            let foo = F::C(foo);
             band_aid! {
                 match foo {
                     F::A => vec![1,2,3].into_iter(),
