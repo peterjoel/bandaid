@@ -1,0 +1,9 @@
+[package]
+name = "bandaid"
+version = "0.1.0"
+authors = ["Peter Hall <peterjoel@gmail.com>"]
+description = "Rust macros for patching things up"
+
+[lib]
+
+[dependencies]
