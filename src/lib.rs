@@ -19,6 +19,8 @@ impl<I, J> Iterator for MyIter<I, J>
     }
 }
 
+#[macro_export]
+#[doc(hidden)]
 macro_rules! __if_else_iter {
     (
         if $p0:tt $b0:block
@@ -50,6 +52,8 @@ macro_rules! __if_else_iter {
     };
 }
 
+#[macro_export]
+#[doc(hidden)]
 macro_rules! __match_iter {
     (
         [$($done:pat,)*] match $val:tt {
